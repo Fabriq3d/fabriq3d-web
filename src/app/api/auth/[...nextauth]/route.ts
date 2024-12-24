@@ -1,60 +1,56 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import { MongoClient } from "mongodb"
 import bcrypt from "bcryptjs"
 
 const client = new MongoClient(process.env.MONGODB_URI!)
-const clientPromise = client.connect()
 
-const handler = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Mot de passe", type: "password" }
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email et mot de passe requis')
-        }
+        try {
+          await client.connect()
+          const db = client.db("fabriq3d")
+          const user = await db.collection("users").findOne({ 
+            email: credentials?.email 
+          })
 
-        const client = await clientPromise
-        const db = client.db("fabriq3d")
-        const user = await db.collection("users").findOne({ 
-          email: credentials.email 
-        })
+          if (!user || !user.password) {
+            throw new Error('Invalid credentials')
+          }
 
-        if (!user || !user.password) {
-          throw new Error('Utilisateur non trouvé')
-        }
+          const isValid = await bcrypt.compare(
+            credentials?.password || '',
+            user.password
+          )
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
+          if (!isValid) {
+            throw new Error('Invalid credentials')
+          }
 
-        if (!isValid) {
-          throw new Error('Mot de passe incorrect')
-        }
-
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            role: user.role
+          }
+        } catch (error) {
+          console.error('Auth error:', error)
+          return null
+        } finally {
+          await client.close()
         }
       }
     })
   ],
   pages: {
     signIn: '/admin/login',
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -65,12 +61,13 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as string
+        session.user.role = token.role
       }
       return session
     }
   },
-  secret: process.env.NEXTAUTH_SECRET,
-})
+  secret: process.env.NEXTAUTH_SECRET
+}
 
+const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }
