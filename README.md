@@ -1,44 +1,67 @@
-# Fabriq3D Solutions - Personnalisation de Porte-clés
+# Fabriq3D Solutions - Application Web de Personnalisation de Porte-clés
 
-Application web permettant aux clients de personnaliser et commander des porte-clés 3D.
+Application web permettant aux clients de personnaliser et commander des porte-clés en 3D.
 
 ## Fonctionnalités
 
-- Personnalisation interactive de porte-clés
-- Visualisation 3D en temps réel
-- Système de commande sécurisé
-- Interface utilisateur moderne et responsive
-- Optimisation SEO
+- Personnalisation de porte-clés en temps réel
+- Visualisation 3D interactive
+- Formulaire de commande intégré
+- Stockage des commandes dans MongoDB
 
-## Technologies utilisées
+## Technologies Utilisées
 
-- Frontend : React.js, Three.js pour la visualisation 3D
-- Backend : Flask (Python)
-- Base de données : SQLite
-- Styles : Tailwind CSS
+- **Frontend:**
+  - Next.js 14
+  - React
+  - Three.js avec React Three Fiber
+  - Tailwind CSS
 
-## Installation
+- **Backend:**
+  - API Routes Next.js
+  - MongoDB
 
-1. Cloner le repository
-2. Installer les dépendances frontend :
+## Configuration Locale
+
+1. Clonez le repository :
 ```bash
-cd frontend
+git clone https://github.com/Fabriq3d/fabriq3d-web.git
+cd fabriq3d-web
+```
+
+2. Installez les dépendances :
+```bash
 npm install
 ```
 
-3. Installer les dépendances backend :
-```bash
-cd backend
-pip install -r requirements.txt
+3. Créez un fichier `.env.local` avec les variables suivantes :
+```
+MONGODB_URI=votre_url_mongodb
 ```
 
-4. Lancer l'application :
+4. Lancez le serveur de développement :
 ```bash
-# Terminal 1 - Backend
-cd backend
-flask run
-
-# Terminal 2 - Frontend
-cd frontend
-npm start
+npm run dev
 ```
+
+5. Ouvrez [http://localhost:3000](http://localhost:3000)
+
+## Déploiement
+
+L'application est déployée sur Vercel avec une base de données MongoDB Atlas.
+
+## Structure du Projet
+
+```
+src/
+  ├── app/
+  │   ├── api/
+  │   │   └── orders/
+  │   ├── layout.tsx
+  │   └── page.tsx
+  ├── components/
+  │   ├── KeychainCustomizer.tsx
+  │   ├── KeychainModel.tsx
+  │   └── OrderForm.tsx
+  └── lib/
+      └── mongodb.ts
