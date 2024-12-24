@@ -1,8 +1,11 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "@/lib/mongodb"
+import { MongoClient } from "mongodb"
 import bcrypt from "bcryptjs"
+
+const client = new MongoClient(process.env.MONGODB_URI!)
+const clientPromise = client.connect()
 
 const handler = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
@@ -46,8 +49,12 @@ const handler = NextAuth({
       }
     })
   ],
+  pages: {
+    signIn: '/admin/login',
+  },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -58,14 +65,12 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role
+        session.user.role = token.role as string
       }
       return session
     }
   },
-  pages: {
-    signIn: '/admin/login',
-  },
+  secret: process.env.NEXTAUTH_SECRET,
 })
 
 export { handler as GET, handler as POST }
